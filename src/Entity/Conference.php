@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ConferenceRepository")
@@ -37,6 +38,11 @@ class Conference
      * @ORM\OneToMany(targetEntity="App\Entity\Comment", mappedBy="conference", orphanRemoval=true)
      */
     private $comments;
+
+    /**
+     * @ORM\Column(type="string", length=255, unique=true)
+     */
+    private $slug;
 
     public function __construct()
     {
@@ -118,5 +124,24 @@ class Conference
     public function __toString()
     {
         return $this->city.' '.$this->year;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    public function compteSlug(SluggerInterface $slugger)
+    {
+        if(!$this->slug || '_' === $this->slug){
+            $this->slug = (string) $slugger->slug((string) $this)->lower();
+        }
     }
 }
