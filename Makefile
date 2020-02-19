@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
 tests:
-	symfony console doctrine:fixtures:load -n
-	symfony run bin/phpunit
+	php bin/console doctrine:fixtures:load -n --env=test
+	php bin/phpunit
 .PHONY: tests

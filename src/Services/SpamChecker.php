@@ -85,14 +85,14 @@ class SpamChecker
 
         $headers = $response->getHeaders();
 
-        if ( 'discard' === ($headers['k-akismet-pro-tip'][0] ?? '') ) {
+        if ( 'discard' === ($headers['x-akismet-pro-tip'][0] ?? '') ) {
             return self::BLATANT_SPAM;
         }
 
         $content = $response->getContent();
 
-        if ( isset($headers['x-ikismet-debug-help'][0]) ) {
-            throw new \RuntimeException(sprintf('Unable to ckeck for spam: %s (%s).', $content, $headers['x-ikismet-debug-help'][0]));
+        if ( isset($headers['x-akismet-debug-help'][0]) ) {
+            throw new \RuntimeException(sprintf('Unable to ckeck for spam: %s (%s).', $content, $headers['x-akismet-debug-help'][0]));
         }
 
         return ('true' === $content) ? self::MAYBE_SPAM : self::NOT_SPAM;
