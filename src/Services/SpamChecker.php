@@ -5,10 +5,20 @@ namespace App\Services;
 
 
 use App\Entity\Comment;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SpamChecker
 {
+
+    public const NOT_SPAM = 0;
+    public const MAYBE_SPAM = 1;
+    public const BLATANT_SPAM = 2;
+
+    public const AKISMET_URL = 'https://%s.rest.akismet.com/1.1/comment-check';
 
     /**
      * @var HttpClientInterface
@@ -31,44 +41,63 @@ class SpamChecker
      * @param HttpClientInterface $client
      * @param string              $akismetKey
      */
-    public function __construct(HttpClientInterface $client, string  $akismetKey)
+    public function __construct(HttpClientInterface $client, string $akismetKey)
     {
-        $this->client = $client;
-        $this->endpoint = sprintf('https://%s.rest.akismet.com/1.1/comment-check', $akismetKey);
+        $this->client   = $client;
+        $this->endpoint = sprintf(self::AKISMET_URL, $akismetKey);
     }
 
-    public function getSpanScore(Comment $comment, array $context): int
+
+    /**
+     * @param Comment $comment
+     * @param array   $context
+     *
+     * @return int
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     *
+     *
+     */
+    public function getSpamScore(Comment $comment, array $context): int
     {
-        $respose =  $this->client->request('POST', $this->endpoint, [
-           'body' => array_merge(
-               $context,
-               [
-                   'blog' => 'http//sf5-books.test',
-                   'comment_type' =>'comment',
-                   'comment_author' => $comment->getAuthor(),
-                   'comment_author_email'  => $comment->getEmail(),
-                   'comment_content' => $comment->getText(),
-                   'comment_date_gmt' => $comment->getCreatedAt()->format('c'),
-                   'blog_lang' => 'en',
-                   'blog_charset'=> 'UTF-8',
-                   'is_test' => true
-               ]
-           )
-        ]);
+        dd($this->endpoint);
+        $response = $this->client->request(
+            'POST',
+            $this->endpoint,
+            [
+                'body' => array_merge(
+                    $context,
+                    [
+                        'blog'                 => 'http//sf5-books.test',
+                        'comment_type'         => 'comment',
+                        'comment_author'       => $comment->getAuthor(),
+                        'comment_author_email' => $comment->getEmail(),
+                        'comment_content'      => $comment->getText(),
+                        'comment_date_gmt'     => $comment->getCreatedAt()->format('c'),
+                        'blog_lang'            => 'en',
+                        'blog_charset'         => 'UTF-8',
+                        'is_test'              => true,
+                    ]
+                ),
+            ]
+        );
 
-        $headers =  $respose->getHeaders();
 
-        if('discard'  === ($headers['k-akismet-pro-tip'][0] ?? '')){
-            return 2;
+        $headers = $response->getHeaders();
+
+        if ( 'discard' === ($headers['k-akismet-pro-tip'][0] ?? '') ) {
+            return self::BLATANT_SPAM;
         }
 
-        $content = $respose->getContent();
+        $content = $response->getContent();
 
-        if(isset($headers['x-ikismet-debug-help'][0])){
-            throw new \RuntimeException(sprintf('Unable to ckeck for spam: %s (%s).',$content, $headers['x-ikismet-debug-help'][0]));
+        if ( isset($headers['x-ikismet-debug-help'][0]) ) {
+            throw new \RuntimeException(sprintf('Unable to ckeck for spam: %s (%s).', $content, $headers['x-ikismet-debug-help'][0]));
         }
 
-        return 'true' === $content ? 1 : 0;
+        return ('true' === $content) ? self::MAYBE_SPAM : self::NOT_SPAM;
 
     }
 
