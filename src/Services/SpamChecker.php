@@ -62,7 +62,6 @@ class SpamChecker
      */
     public function getSpamScore(Comment $comment, array $context): int
     {
-        dd($this->endpoint);
         $response = $this->client->request(
             'POST',
             $this->endpoint,
@@ -83,7 +82,6 @@ class SpamChecker
                 ),
             ]
         );
-
 
         $headers = $response->getHeaders();
 
