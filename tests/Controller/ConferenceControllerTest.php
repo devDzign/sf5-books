@@ -44,7 +44,7 @@ class ConferenceControllerTest extends WebTestCase
     }
 
     /**
-     * 
+     *
      */
     public function testConferencePage()
     {
