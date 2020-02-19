@@ -1,39 +1,37 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Conference Book{% endblock %}
+{% block title %}Conference Guestbook - {{ conference }}{% endblock %}
 
 {% block body %}
-    <h2>Give your feedback!</h2>
-    {% if comments| length > 0 %}
-        <div>
-            There are {{ comments | length }} comments.
-        </div>
+    <h2>{{ conference }} Conference</h2>
+
+    {% if comments|length > 0 %}
+        <div>There are {{ comments|length }} comments.</div>
+
         {% for comment in comments %}
-            {% if comment.photoFilename %}
-                <img src="{{ asset('uploads/photos/'~ comment.photoFilename) }}" alt="">
+            {% if comment.photofilename %}
+                <img src="{{ asset('uploads/photos/' ~ comment.photofilename) }}" />
             {% endif %}
+
             <h4>{{ comment.author }}</h4>
             <small>
-
                 {{ comment.createdAt|format_datetime('medium', 'short') }}
             </small>
-            <p>
-                {{ comment.text }}
-            </p>
+
+            <p>{{ comment.text }}</p>
         {% endfor %}
-        {% if previous >=0 %}
-            <a href="{{ path('app.conference_show', {slug: conference.slug, offset: previous  }) }}"> <<< Previous </a>
+
+        {% if previous >= 0 %}
+            <a href="{{ path('app.conference_show', { slug: conference.slug, offset: previous }) }}">Previous</a>
         {% endif %}
-        {% if next < comments | length %}
-            <a href="{{ path('app.conference_show', {slug: conference.slug, offset: next  }) }}">Next >>> </a>
+        {% if next < comments|length %}
+            <a href="{{ path('app.conference_show', { slug: conference.slug, offset: next }) }}">Next</a>
         {% endif %}
     {% else %}
-        <div>No comment have been posted yet for this conference.</div>
+        <div>No comments have been posted yet for this conference.</div>
     {% endif %}
 
     <h2>Add your own feedback</h2>
 
     {{ form(comment_form) }}
-
-
 {% endblock %}
